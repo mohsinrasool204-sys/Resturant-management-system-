@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="appTitleTag">E-Sarmaya – Restaurant Management System</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --gold: #e8b84b;
+    --gold2: #f5d07a;
+    --red: #e05252;
+    --green: #3ecf8e;
+    --blue: #4a90d9;
+    --yellow: #f0c040;
+    --purple: #9b6dff;
+    --text: #e8eaf0;
+    --text2: #9199b5;
+    --text3: #5a6080;
+    --radius: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── SYSTEM LOCKOUT SCREEN OVERLAY ── */
+  #killSwitchOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #1a0a0a 0%, #050101 100%);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .lockCard {
+    background: #1c1010;
+    border: 2px solid var(--red);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  }
+  .lockIcon {
+    font-size: 56px;
+    color: var(--red);
+    margin-bottom: 20px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .lockCard h2 {
+    font-size: 24px;
+    color: #fff;
+    margin-bottom: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .lockCard p {
+    color: #e8a5a5;
+    font-size: 14px;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #loginScreen { display:flex; align-items:center; justify-content:center; min-height:100vh; background: radial-gradient(ellipse at 60% 40%, #1a1d27 0%, #0a0c12 100%); }
+  .loginBox { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 48px 40px; width: 380px; box-shadow: var(--shadow); }
+  .loginLogo { text-align:center; margin-bottom:32px; }
+  .loginLogo h1 { font-size:28px; color:var(--gold); letter-spacing:2px; font-weight:800; text-transform: uppercase; }
+  .loginLogo p { color:var(--text2); font-size:13px; margin-top:4px; }
+  .formGroup { margin-bottom:18px; }
+  .formGroup label { display:block; font-size:13px; color:var(--text2); margin-bottom:6px; font-weight:600; }
+  .formGroup input, .formGroup select, .formGroup textarea {
+    width:100%; padding:11px 14px; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-size:14px; transition:.2s;
+  }
+  .formGroup input:focus, .formGroup select:focus, .formGroup textarea:focus { outline:none; border-color:var(--gold); }
+  .pwWrap { position:relative; }
+  .pwToggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--text2); font-size:16px; background:none; border:none; }
+  .checkRow { display:flex; align-items:center; gap:8px; margin-bottom:18px; }
+  .checkRow input { width:auto; }
+  .checkRow label { font-size:13px; color:var(--text2); }
+  .btnPrimary { width:100%; padding:13px; background:linear-gradient(135deg,var(--gold),#c9930f); color:#000; font-size:15px; font-weight:700; border:none; border-radius:8px; cursor:pointer; transition:.2s; letter-spacing:.5px; }
+  .btnPrimary:hover { opacity:.9; transform:translateY(-1px); }
+  .loginError { color:var(--red); font-size:13px; text-align:center; margin-top:10px; display:none; }
+
+  /* ── LOGO INJECTION STYLES ── */
+  .logoContainer {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 16px auto;
+  }
+  .logoContainer img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+  .loginLogo .logoContainer { max-height: 70px; }
+  .sidebarLogo .logoContainer { max-height: 50px; margin-bottom: 12px; }
+  .topbarTitle .logoContainer { max-height: 32px; margin: 0 12px 0 0; display: inline-flex; }
+  .invoiceLogoContainer { display: none; text-align: center; margin-bottom: 14px; }
+  .invoiceLogoContainer img { max-height: 120px; max-width: 100%; filter: grayscale(100%); }
+
+  /* ── APP LAYOUT ── */
+  #app { display:none; flex-direction:row; height:100vh; overflow:hidden; }
+  .sidebar { width:220px; min-width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+  .sidebarLogo { padding:20px 16px 16px; border-bottom:1px solid var(--border); text-align: center; }
+  .sidebarLogo h2 { color:var(--gold); font-size:17px; font-weight:800; letter-spacing:1.5px; text-transform: uppercase; }
+  .sidebarLogo p { color:var(--text3); font-size:11px; margin-top:2px; }
+  .sidebarUser { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .userAvatar { width:34px; height:34px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700; color:#000; font-size:14px; }
+  .userName { font-size:13px; font-weight:600; }
+  .userRole { font-size:11px; color:var(--text2); }
+  .navGroup { padding:8px 0; }
+  .navLabel { padding:6px 16px; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:1.5px; font-weight:700; }
+  .navItem { display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; font-size:13px; color:var(--text2); transition:.15s; border-left:3px solid transparent; }
+  .navItem:hover { background:var(--surface2); color:var(--text); }
+  .navItem.active { background:rgba(232,184,75,.1); color:var(--gold); border-left-color:var(--gold); font-weight:600; }
+  .navItem .icon { font-size:16px; width:20px; text-align:center; }
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .topbar { padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .topbarTitle { font-size:18px; font-weight:700; display: flex; align-items: center; }
+  .topbarRight { display:flex; align-items:center; gap:12px; }
+  .btnIcon { padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text2); cursor:pointer; font-size:13px; transition:.15s; }
+  .btnIcon:hover { color:var(--text); border-color:var(--gold); }
+  .content { flex:1; overflow-y:auto; padding:24px; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ── CARDS & STATS ── */
+  .statsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+  .statCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; position:relative; overflow:hidden; }
+  .statCard::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .statCard.gold::before { background:var(--gold); }
+  .statCard.green::before { background:var(--green); }
+  .statCard.red::before { background:var(--red); }
+  .statCard.blue::before { background:var(--blue); }
+  .statCard.purple::before { background:var(--purple); }
+  .statCard.yellow::before { background:var(--yellow); }
+  .statLabel { font-size:12px; color:var(--text2); margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  .statValue { font-size:26px; font-weight:800; }
+  .statSub { font-size:12px; color:var(--text2); margin-top:4px; }
+
+  /* ── TABLE GRID ── */
+  .tableGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; }
+  .tableCard { background:var(--surface); border:2px solid var(--border); border-radius:12px; padding:18px; text-align:center; cursor:pointer; transition:.2s; position:relative; }
+  .tableCard:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
+  .tableCard.available { border-color:var(--green); }
+  .tableCard.occupied { border-color:var(--red); }
+  .tableCard.bill-pending { border-color:var(--yellow); }
+  .tableCard.reserved { border-color:var(--blue); }
+  .tableCard.takeaway { border-color:var(--purple); background: rgba(155,109,255,0.05); }
+  .tableNum { font-size:24px; font-weight:800; }
+  .tableName { font-size:12px; color:var(--text2); margin-top:4px; }
+  .tableStatus { font-size:11px; font-weight:700; margin-top:8px; padding:4px 10px; border-radius:20px; display:inline-block; }
+  .available .tableStatus { background:rgba(62,207,142,.15); color:var(--green); }
+  .occupied .tableStatus { background:rgba(224,82,82,.15); color:var(--red); }
+  .bill-pending .tableStatus { background:rgba(240,192,64,.15); color:var(--yellow); }
+  .reserved .tableStatus { background:rgba(74,144,217,.15); color:var(--blue); }
+  .takeaway .tableStatus { background:rgba(155,109,255,.15); color:var(--purple); }
+
+  /* ── MODALS ── */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center; }
+  .overlay.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; width:90%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); }
+  .modal.wide { max-width:760px; }
+  .modal.xl { max-width:960px; }
+  .modalHeader { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .modalHeader h3 { font-size:17px; font-weight:700; }
+  .closeBtn { background:none; border:none; color:var(--text2); font-size:22px; cursor:pointer; }
+  .closeBtn:hover { color:var(--red); }
+
+  /* ── BUTTONS ── */
+  .btn { padding:10px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; border:none; text-decoration:none; display:inline-block; text-align:center; }
+  .btn-gold { background:linear-gradient(135deg,var(--gold),#c9930f); color:#000; }
+  .btn-gold:hover { opacity:.9; }
+  .btn-green { background:rgba(62,207,142,.2); color:var(--green); border:1px solid var(--green); }
+  .btn-red { background:rgba(224,82,82,.2); color:var(--red); border:1px solid var(--red); }
+  .btn-blue { background:rgba(74,144,217,.2); color:var(--blue); border:1px solid var(--blue); }
+  .btn-purple { background:rgba(155,109,255,.2); color:var(--purple); border:1px solid var(--purple); }
+  .btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+  .btn-ghost:hover { color:var(--text); border-color:var(--gold); }
+  .btnRow { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+
+  /* ── TABLE (data) ── */
+  .dataTable { width:100%; border-collapse:collapse; font-size:13px; }
+  .dataTable th { background:var(--surface2); padding:10px 14px; text-align:left; color:var(--text2); font-size:11px; text-transform:uppercase; letter-spacing:.8px; }
+  .dataTable td { padding:11px 14px; border-bottom:1px solid var(--border); }
+  .dataTable tr:hover td { background:var(--surface2); }
+  .badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+  .badge-green { background:rgba(62,207,142,.15); color:var(--green); }
+  .badge-red { background:rgba(224,82,82,.15); color:var(--red); }
+  .badge-yellow { background:rgba(240,192,64,.15); color:var(--yellow); }
+  .badge-blue { background:rgba(74,144,217,.15); color:var(--blue); }
+  .badge-purple { background:rgba(155,109,255,.15); color:var(--purple); }
+
+  /* ── ORDER PANEL ── */
+  .orderPanelGrid { display:grid; grid-template-columns:1fr 340px; gap:16px; height:calc(100vh - 120px); }
+  .menuPanel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column; }
+  .menuSearch { padding:14px; border-bottom:1px solid var(--border); }
+  .menuSearch input { width:100%; padding:9px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; }
+  .menuCats { display:flex; gap:8px; padding:12px 14px; flex-wrap:wrap; border-bottom:1px solid var(--border); }
+  .catChip { padding:5px 14px; border-radius:20px; font-size:12px; cursor:pointer; border:1px solid var(--border); color:var(--text2); transition:.15s; }
+  .catChip.active, .catChip:hover { background:rgba(232,184,75,.15); color:var(--gold); border-color:var(--gold); }
+  .menuItems { flex:1; overflow-y:auto; padding:12px; display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; align-content:start; }
+  
+  /* ITEM CARDS */
+  .menuItemCard { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px; cursor:pointer; transition:.15s; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between; min-height:160px; }
+  .menuItemCard:hover { border-color:var(--gold); transform:translateY(-1px); }
+  .menuItemImg { width: 65px; height: 65px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; }
+  .menuItemImg img { width: 100%; height: 100%; object-fit: cover; }
+  .menuItemCard .miName { font-size:13px; font-weight:600; margin-bottom:4px; line-height: 1.3; }
+  .menuItemCard .miPrice { font-size:14px; color:var(--gold); font-weight:700; }
+  .menuItemCard .miCat { font-size:11px; color:var(--text3); margin-top:2px; }
+  
+  .orderCart { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); display:flex; flex-direction:column; overflow:hidden; }
+  .cartHeader { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .cartHeader h3 { font-size:15px; font-weight:700; }
+  .cartHeader p { font-size:12px; color:var(--text2); margin-top:2px; }
+  .cartItems { flex:1; overflow-y:auto; padding:12px; }
+  .cartItem { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .cartItem:last-child { border-bottom:none; }
+  .cartItemImg { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); background: var(--surface2); display:flex; align-items:center; justify-content:center; font-size:14px; overflow: hidden; }
+  .cartItemImg img { width: 100%; height: 100%; object-fit: cover; }
+  .cartItemName { flex:1; font-size:13px; font-weight:600; }
+  .cartItemSub { font-size:11px; color:var(--text2); }
+  .qtyCtrl { display:flex; align-items:center; gap:6px; }
+  .qtyBtn { width:24px; height:24px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .qtyBtn:hover { border-color:var(--gold); color:var(--gold); }
+  .cartItemPrice { font-size:14px; font-weight:700; color:var(--gold); min-width:60px; text-align:right; }
+  .cartFooter { padding:14px; border-top:1px solid var(--border); }
+  .totalRow { display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; }
+  .totalRow.grand { font-size:16px; font-weight:800; color:var(--gold); }
+  .totalRow span:last-child { font-weight:600; }
+  .cartActions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+
+  /* ── KITCHEN ── */
+  .kitchenGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+  .kitchenCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .kitchenCardHead { padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .kitchenCardHead.pending { border-left:4px solid var(--yellow); }
+  .kitchenCardHead.preparing { border-left:4px solid var(--blue); }
+  .kitchenCardHead.ready { border-left:4px solid var(--green); }
+  .kitchenCardHead.delivered { border-left:4px solid var(--text3); }
+  .kitchenItems { padding:0 16px 14px; font-size:13px; }
+  .kitchenItem { padding:5px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .kitchenItem:last-child { border-bottom:none; }
+
+  /* ── INVOICE PRINT ── */
+  .invoicePrint { background:#fff; color:#000; padding:24px; font-family:monospace; font-size:13px; max-width:320px; margin:0 auto; }
+  .invoicePrint h2 { text-align:center; font-size:18px; margin-bottom:4px; text-transform: uppercase; }
+  .invoicePrint .sub { text-align:center; font-size:12px; color:#555; }
+  .invoicePrint hr { border:none; border-top:1px dashed #999; margin:10px 0; }
+  .invRow { display:flex; justify-content:space-between; margin:4px 0; }
+  .invRow.bold { font-weight:700; }
+  .invRow.total { font-size:15px; font-weight:800; border-top:2px solid #000; padding-top:6px; margin-top:6px; }
+
+  /* ── SECTION HEADER ── */
+  .secHeader { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .secHeader h2 { font-size:17px; font-weight:700; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+  .twoCol { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .threeCol { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+  /* ── ALERTS ── */
+  .alert { padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:12px; }
+  .alert-red { background:rgba(224,82,82,.15); color:var(--red); border:1px solid rgba(224,82,82,.3); }
+  .alert-green { background:rgba(62,207,142,.15); color:var(--green); border:1px solid rgba(62,207,142,.3); }
+  .alert-yellow { background:rgba(240,192,64,.15); color:var(--yellow); border:1px solid rgba(240,192,64,.3); }
+
+  /* ── TOAST ── */
+  #toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-size:13px; z-index:999; opacity:0; transition:.3s; pointer-events:none; }
+  #toast.show { opacity:1; }
+
+  /* ── REPORT DATE SEARCH WRAPPER ── */
+  .reportSearchWrap { background: var(--surface2); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border); }
+
+  /* ── MOBILE RESPONSIVE ── */
+  @media(max-width:768px) {
+    .sidebar { position:fixed; left:-220px; top:0; bottom:0; z-index:50; transition:.3s; }
+    .sidebar.open { left:0; }
+    .main { width:100%; }
+    .orderPanelGrid { grid-template-columns:1fr; height:auto; }
+    .orderCart { height:400px; }
+    .statsGrid { grid-template-columns:1fr 1fr; }
+    .twoCol, .threeCol { grid-template-columns:1fr; }
+    .menuToggle { display:flex; }
+    .content { padding:14px; }
+  }
+  .menuToggle { display:none; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); cursor:pointer; font-size:18px; }
+  .tableWrap { overflow-x:auto; }
+
+  /* ── SETTINGS ── */
+  .settingsGrid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .settingCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+  .settingCard h3 { font-size:14px; font-weight:700; margin-bottom:14px; color:var(--gold); }
+
+  select option { background:var(--surface2); }
+  input[type=number] { -moz-appearance:textfield; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
+
+  .emptyState { text-align:center; padding:40px; color:var(--text3); font-size:14px; }
+  .emptyState .ico { font-size:40px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<!-- ── SYSTEM SUSPENSION OVERLAY (KILL SWITCH) ── -->
+<div id="killSwitchOverlay">
+  <div class="lockCard">
+    <div class="lockIcon">🔒</div>
+    <h2 id="lockoutTitle">System Suspended</h2>
+    <p>This software license has been temporarily suspended by the provider. Please contact customer support or insert the master security password to reactivate.</p>
+    <div class="formGroup">
+      <input type="password" id="emergencyUnlockPass" placeholder="Enter Master Password">
+    </div>
+    <button class="btnPrimary" onclick="attemptEmergencyUnlock()">Reactivate Instance</button>
+    <div class="loginError" id="emergencyUnlockError" style="margin-top: 10px;">Incorrect Master Verification Password</div>
+  </div>
+</div>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="loginBox">
+    <div class="loginLogo">
+      <div class="logoContainer" id="loginLogoContainer">
+        <img src="" alt="Enterprise Logo" id="loginLogoImg">
+      </div>
+      <h1 class="appNameText">E-SARMAYA</h1>
+      <p>Restaurant Management System</p>
+      <p style="margin-top:4px;color:var(--text3);font-size:11px;" id="loginSystemPhone">📞 03165984500</p>
+    </div>
+    <div class="formGroup">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="formGroup">
+      <label>Password</label>
+      <div class="pwWrap">
+        <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password">
+        <button class="pwToggle" onclick="togglePw()">👁</button>
+      </div>
+    </div>
+    <div class="checkRow">
+      <input type="checkbox" id="rememberMe">
+      <label for="rememberMe">Remember me</label>
+    </div>
+    <button class="btnPrimary" onclick="doLogin()">Sign In</button>
+    <div class="loginError" id="loginError">Invalid username or password</div>
+    <p style="text-align:center;margin-top:18px;font-size:11px;color:var(--text3);" id="loginScreenDefaults">Default roles: admin / cashier / kitchen</p>
+  </div>
+</div>
+
+<!-- ── MAIN APP CONTAINER ── -->
+<div id="app">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebarLogo">
+      <div class="logoContainer" id="sidebarLogoContainer">
+        <img src="" alt="Enterprise Logo" id="sidebarLogoImg">
+      </div>
+      <h2 class="appNameText">E-SARMAYA</h2>
+      <p>Workspace Terminal</p>
+    </div>
+    <div class="sidebarUser">
+      <div class="userAvatar" id="userAvatar">A</div>
+      <div>
+        <div class="userName" id="activeUserName">Administrator</div>
+        <div class="userRole" id="activeUserRole">Admin Station</div>
+      </div>
+    </div>
+    <nav class="navGroup">
+      <div class="navLabel">Operations</div>
+      <div class="navItem active" onclick="switchPage('dashboard', this)">
+        <span class="icon">📊</span> Dashboard
+      </div>
+      <div class="navItem" onclick="switchPage('tables', this)">
+        <span class="icon">🍽️</span> Tables & Orders
+      </div>
+      <div class="navItem" onclick="switchPage('kitchen', this)">
+        <span class="icon">🍳</span> Kitchen Queue
+      </div>
+      <div class="navItem" onclick="switchPage('reports', this)">
+        <span class="icon">📈</span> Sales Ledger
+      </div>
+      <div class="navItem" onclick="switchPage('settings', this)">
+        <span class="icon">⚙️</span> Control Center
+      </div>
+    </nav>
+    <div style="margin-top:auto; padding:16px; border-top:1px solid var(--border)">
+      <button class="btn btn-red" style="width:100%" onclick="doLogout()">🚪 Log Out</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT WORKSPACE ── -->
+  <main class="main">
+    <!-- ── TOPBAR ── -->
+    <header class="topbar">
+      <div class="topbarTitle">
+        <button class="menuToggle" onclick="toggleSidebar()">☰</button>
+        <div class="logoContainer" id="topbarLogoContainer">
+          <img src="" alt="Enterprise Logo" id="topbarLogoImg">
+        </div>
+        <span id="currentPageTitle">Dashboard Overview</span>
+      </div>
+      <div class="topbarRight">
+        <div id="systemClock" style="font-size:13px; color:var(--text2); margin-right:12px;"></div>
+        <button class="btnIcon" onclick="switchPage('settings', null)">⚙️ Options</button>
+      </div>
+    </header>
+
+    <!-- ── APP CONTENT SECTION ── -->
+    <div class="content">
+
+      <!-- ── PAGE: DASHBOARD ── -->
+      <section id="page-dashboard" class="page active">
+        <div class="statsGrid">
+          <div class="statCard gold">
+            <div class="statLabel">Today's Revenue</div>
+            <div class="statValue" id="statRevenue">Rs. 0.00</div>
+            <div class="statSub">Net sales generated today</div>
+          </div>
+          <div class="statCard green">
+            <div class="statLabel">Completed Orders</div>
+            <div class="statValue" id="statOrders">0</div>
+            <div class="statSub">Invoices processed successfully</div>
+          </div>
+          <div class="statCard blue">
+            <div class="statLabel">Active Table Occupancy</div>
+            <div class="statValue" id="statOccupancy">0 / 0</div>
+            <div class="statSub">Active table status distribution</div>
+          </div>
+          <div class="statCard purple">
+            <div class="statLabel">Pending Prep Queue</div>
+            <div class="statValue" id="statPendingPrep">0</div>
+            <div class="statSub">Items pending kitchen service</div>
+          </div>
+        </div>
+
+        <div class="twoCol">
+          <div class="card">
+            <h3>Recent Sales</h3>
+            <div class="tableWrap" style="margin-top:14px;">
+              <table class="dataTable">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Invoice ID</th>
+                    <th>Origin</th>
+                    <th>Subtotal</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recentActivityBody">
+                  <!-- Dynamic render -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Popular Catalog Items</h3>
+            <div class="tableWrap" style="margin-top:14px;">
+              <table class="dataTable">
+                <thead>
+                  <tr>
+                    <th> culinary Specification</th>
+                    <th>Category</th>
+                    <th>Units Sold</th>
+                    <th>Total Yield</th>
+                  </tr>
+                </thead>
+                <tbody id="popularItemsBody">
+                  <!-- Dynamic render -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PAGE: TABLES & ORDERS ── -->
+      <section id="page-tables" class="page">
+        <div class="secHeader">
+          <h2>Dining Layout & Billing Terminals</h2>
+          <button class="btn btn-gold" onclick="openNewOrderModal()">➕ Create Direct Custom Order</button>
+        </div>
+        <div class="tableGrid" id="floorLayoutGrid">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- ── PAGE: KITCHEN QUEUE ── -->
+      <section id="page-kitchen" class="page">
+        <div class="secHeader">
+          <h2>Kitchen Operations Queue</h2>
+          <span class="badge badge-purple" id="kitchenQueueCount">0 Pending Tasks</span>
+        </div>
+        <div class="kitchenGrid" id="kitchenGridContainer">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- ── PAGE: SALES LEDGER (FINANCIAL REPORTS) ── -->
+      <section id="page-reports" class="page">
+        <div class="secHeader">
+          <h2>Sales Insights & Audit Ledger</h2>
+          <button class="btn btn-blue" onclick="exportSalesReport()">💾 Export Statement</button>
+        </div>
+        <div class="reportSearchWrap">
+          <div class="threeCol">
+            <div class="formGroup">
+              <label>Select Audit Date</label>
+              <input type="date" id="reportDateSelect" onchange="generateReportData()">
+            </div>
+            <div class="formGroup">
+              <label>Filter Category</label>
+              <select id="reportCategoryFilter" onchange="generateReportData()">
+                <option value="ALL">All Categories</option>
+              </select>
+            </div>
+            <div class="formGroup" style="display:flex; align-items:flex-end;">
+              <button class="btn btn-gold" style="width:100%; height:42px;" onclick="resetReportFilters()">🔄 Reset Query Filters</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tableWrap">
+            <table class="dataTable">
+              <thead>
+                <tr>
+                  <th>Order Reference</th>
+                  <th>Timestamp</th>
+                  <th>Origin / Table</th>
+                  <th>Items Summary</th>
+                  <th>Subtotal</th>
+                  <th>Tax</th>
+                  <th>Discount</th>
+                  <th>Final Yield</th>
+                </tr>
+              </thead>
+              <tbody id="reportLedgerBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PAGE: CONFIGURATION / SETTINGS ── -->
+      <section id="page-settings" class="page">
+        <div class="secHeader">
+          <h2>System Control Configuration</h2>
+        </div>
+
+        <div class="settingsGrid">
+          <!-- BRANDING & UTILITIES -->
+          <div class="settingCard">
+            <h3>Enterprise Identity & Dynamic Branding</h3>
+            <p style="font-size: 12px; color: var(--text2); margin-bottom: 12px;">Dynamic branding propagates throughout the interface based on the dynamic image asset link provided.</p>
+            
+            <div class="formGroup">
+              <label>Enterprise Dynamic Name</label>
+              <input type="text" id="cfgAppName" placeholder="Change system application title">
+            </div>
+            <div class="formGroup">
+              <label>Dynamic Logo URL Link</label>
+              <input type="url" id="cfgLogoUrl" placeholder="https://domain.com/path-to-image.png" oninput="previewConfigLogo(this.value)">
+              <div style="margin-top: 10px; text-align: center;">
+                <p style="font-size:11px; color:var(--text3); margin-bottom:6px;">Branding Image Preview</p>
+                <img id="cfgLogoPreview" src="" alt="Dynamic Brand Preview" style="max-height: 80px; max-width: 100%; border: 1px dashed var(--border); border-radius: 8px; padding: 6px; display: none; margin: 0 auto;">
+              </div>
+            </div>
+            <div class="formGroup">
+              <label>Support Contact/Phone Number</label>
+              <input type="text" id="cfgAppPhone" placeholder="Enter support phone or contact">
+            </div>
+            <button class="btn btn-gold" style="width:100%" onclick="saveBrandingConfig()">💾 Apply Dynamic Identity Configurations</button>
+          </div>
+
+          <!-- SYSTEM LOCK (OWNER CONTROL PANEL) -->
+          <div class="settingCard" style="border: 1px solid var(--red);">
+            <h3 style="color: var(--red);">System Provider Control Panel</h3>
+            <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">Secure administrative control area restricted to software engineers and distribution agents. Access requires Master Password authentication.</p>
+            
+            <div id="ownerAuthContainer">
+              <div class="formGroup">
+                <label>Developer Master Verification Password</label>
+                <input type="password" id="ownerVerificationPass" placeholder="Enter Master Unlock Password">
+              </div>
+              <button class="btn btn-red" style="width:100%" onclick="verifyAndUnlockOwnerSettings()">🔑 Authorize Developer Mode</button>
+            </div>
+
+            <div id="ownerControlContainer" style="display: none;">
+              <div class="alert alert-green">🔑 Provider Authentication Success</div>
+              
+              <div class="formGroup">
+                <label>Application Live Status State</label>
+                <select id="ownerAppStatus">
+                  <option value="active">Active (Permitted System Access)</option>
+                  <option value="suspended">Suspended (Enforce System Isolation Lock)</option>
+                </select>
+              </div>
+
+              <div class="formGroup">
+                <label>Remote Kill Switch URL Endpoint</label>
+                <input type="url" id="ownerRemoteKillUrl" placeholder="https://raw.githubusercontent.com/.../status.txt">
+                <p style="font-size: 11px; color: var(--text3); margin-top: 4px;">Dynamic verification endpoint. If this hosted URL returns the keyword "suspended", the application locks immediately.</p>
+              </div>
+
+              <div style="border-top:1px solid var(--border); margin:15px 0; padding-top:15px;">
+                <h4 style="font-size:13px; margin-bottom:10px; color:var(--gold);">Modify System Role Passwords</h4>
+                <div class="formGroup">
+                  <label>New Developer Master Password</label>
+                  <input type="password" id="ownerMasterPassEdit" placeholder="Set new master developer key">
+                </div>
+                <div class="formGroup">
+                  <label>New Administrator Password (admin)</label>
+                  <input type="password" id="ownerAdminPassEdit" placeholder="Set new admin password">
+                </div>
+                <div class="formGroup">
+                  <label>New Cashier Password (cashier)</label>
+                  <input type="password" id="ownerCashierPassEdit" placeholder="Set new cashier password">
+                </div>
+                <div class="formGroup">
+                  <label>New Kitchen Password (kitchen)</label>
+                  <input type="password" id="ownerKitchenPassEdit" placeholder="Set new kitchen password">
+                </div>
+              </div>
+
+              <button class="btn btn-red" style="width: 100%; margin-top: 10px;" onclick="saveOwnerSystemOverrides()">💾 Write Dynamic System overrides</button>
+            </div>
+          </div>
+
+          <!-- DINING STRUCTURE AND TAX RATES -->
+          <div class="settingCard">
+            <h3>Floor Configuration</h3>
+            <div class="formGroup">
+              <label>Global Sales Tax Rate (%)</label>
+              <input type="number" id="cfgTaxRate" step="0.1" min="0">
+            </div>
+            <div class="formGroup">
+              <label>Service Charge (Flat Rs.)</label>
+              <input type="number" id="cfgServiceCharge" min="0">
+            </div>
+            <hr style="border-color: var(--border); margin: 15px 0;">
+            <h4>Manage Dining Tables</h4>
+            <div id="settingsTableList" style="margin-top: 10px; max-height:150px; overflow-y:auto; margin-bottom:10px;">
+              <!-- Dynamically mapped -->
+            </div>
+            <div class="twoCol">
+              <input type="text" id="newTableNameInput" placeholder="Table Name/No.">
+              <button class="btn btn-green" onclick="addNewDiningTable()">➕ Add</button>
+            </div>
+          </div>
+
+          <!-- CATALOG ENGINE MENU ITEMS -->
+          <div class="settingCard">
+            <h3>Culinary Catalog Registry</h3>
+            <div id="settingsMenuList" style="margin-top: 10px; max-height:220px; overflow-y:auto; margin-bottom:15px; border-bottom:1px solid var(--border)">
+              <!-- Dynamic entries -->
+            </div>
+            <h4>Add New Menu Item Specification</h4>
+            <div class="formGroup" style="margin-top:10px;">
+              <label>Item Name</label>
+              <input type="text" id="newMenuItemName" placeholder="Chicken Korma">
+            </div>
+            <div class="twoCol">
+              <div class="formGroup">
+                <label>Price (Rs.)</label>
+                <input type="number" id="newMenuItemPrice" min="0">
+              </div>
+              <div class="formGroup">
+                <label>Category</label>
+                <select id="newMenuItemCategory">
+                  <option value="Starters">Starters</option>
+                  <option value="Main Course">Main Course</option>
+                  <option value="Beverages">Beverages</option>
+                  <option value="Desserts">Desserts</option>
+                </select>
+              </div>
+            </div>
+            <div class="formGroup">
+              <label>Catalog Item Image Link (URL)</label>
+              <input type="url" id="newMenuItemImgUrl" placeholder="https://domain.com/item.png">
+            </div>
+            <button class="btn btn-green" style="width:100%" onclick="addNewMenuItem()">➕ Insert Into Culinary Catalog</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ── ORDER TERMINAL MODAL (WIDE) ── -->
+<div class="overlay" id="orderModal">
+  <div class="modal wide xl">
+    <div class="modalHeader">
+      <h3 id="orderModalTitle">Interactive Point of Sale Terminal</h3>
+      <button class="closeBtn" onclick="closeOrderModal()">×</button>
+    </div>
+    <div class="orderPanelGrid">
+      
+      <!-- MENU SELECTION COMPONENT -->
+      <div class="menuPanel">
+        <div class="menuSearch">
+          <input type="text" id="menuSearchInput" placeholder="🔍 Query culinary catalog dynamically..." oninput="handleMenuSearch()">
+        </div>
+        <div class="menuCats" id="menuCategoriesContainer">
+          <!-- Dynamic categories -->
+        </div>
+        <div class="menuItems" id="menuItemsGrid">
+          <!-- Dynamic grid items -->
+        </div>
+      </div>
+
+      <!-- CART & ORDER STAGING COMPONENT -->
+      <div class="orderCart">
+        <div class="cartHeader">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h3 id="cartOriginLabel">Direct Order Staging</h3>
+            <div class="logoContainer" id="cartLogoContainer" style="max-height: 24px; margin: 0; display: none;">
+              <img src="" alt="Cart Logo" id="cartLogoImg" style="max-height: 24px;">
+            </div>
+          </div>
+          <p id="cartItemsCount">No items loaded</p>
+        </div>
+        <div class="cartItems" id="cartItemsContainer">
+          <!-- Dynamically added items -->
+        </div>
+        <div class="cartFooter">
+          <div class="totalRow">
+            <span>Subtotal:</span>
+            <span id="cartSubtotal">Rs. 0.00</span>
+          </div>
+          <div class="totalRow">
+            <span>Tax Assessment:</span>
+            <span id="cartTax">Rs. 0.00</span>
+          </div>
+          <div class="totalRow">
+            <span>Discount:</span>
+            <input type="number" id="cartDiscount" value="0" min="0" oninput="calculateStagedTotals()" style="width: 70px; text-align: right; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 2px 6px;">
+          </div>
+          <div class="totalRow grand">
+            <span>Payable Total:</span>
+            <span id="cartGrandTotal">Rs. 0.00</span>
+          </div>
+          <div class="cartActions">
+            <button class="btn btn-ghost" onclick="cancelStagedOrder()">❌ Clear</button>
+            <button class="btn btn-gold" onclick="submitStagedOrder()">🚀 Commit Order</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── BILLING & RECEIPT INVOICE MODAL ── -->
+<div class="overlay" id="billModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <h3>Invoice Generation Panel</h3>
+      <button class="closeBtn" onclick="closeBillModal()">×</button>
+    </div>
+    
+    <div id="printArea" style="background:#fff; border-radius: 8px; padding: 10px;">
+      <div class="invoicePrint">
+        <div class="invoiceLogoContainer" id="billLogoContainer">
+          <img src="" alt="Receipt Dynamic Logo" id="billLogoImg">
+        </div>
+        <h2 class="appNameText" id="billTitle">E-SARMAYA</h2>
+        <div class="sub">Authentic Dining Experience</div>
+        <div class="sub" id="billContactDetails">📞 03165984500</div>
+        <hr>
+        <div class="invRow">
+          <span>Date/Time:</span>
+          <span id="billTimestamp">2026-03-31 14:35</span>
+        </div>
+        <div class="invRow">
+          <span>Invoice Ref:</span>
+          <span id="billRef">#INV-10024</span>
+        </div>
+        <div class="invRow">
+          <span>Table/Zone:</span>
+          <span id="billOrigin">Table 04</span>
+        </div>
+        <hr>
+        <div style="font-weight:700; display:flex; margin-bottom:6px;">
+          <span style="flex:1;">Item Description</span>
+          <span style="width:40px; text-align:center;">Qty</span>
+          <span style="width:70px; text-align:right;">Price</span>
+        </div>
+        <div id="billItemsBody">
+          <!-- Dynamically loaded receipt rows -->
+        </div>
+        <hr>
+        <div class="invRow">
+          <span>Subtotal Amount:</span>
+          <span id="billSubtotal">Rs. 0.00</span>
+        </div>
+        <div class="invRow">
+          <span>Sales Tax Appended:</span>
+          <span id="billTax">Rs. 0.00</span>
+        </div>
+        <div class="invRow">
+          <span>Promotional Discount:</span>
+          <span id="billDiscount">-Rs. 0.00</span>
+        </div>
+        <div class="invRow total">
+          <span>Total Balance Due:</span>
+          <span id="billGrandTotal">Rs. 0.00</span>
+        </div>
+        <hr>
+        <div class="sub" style="font-style:italic;">Thank you for dining with us!</div>
+      </div>
+    </div>
+
+    <div class="btnRow" style="margin-top:20px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeBillModal()">Back to Workspace</button>
+      <button class="btn btn-gold" style="flex:1;" onclick="printInvoiceContents()">🖨️ Execute Device Print</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Dynamic Notification Target</div>
+
+<script>
+  // ── DEEP ARCHITECTURAL REGISTRIES ──
+  let DB = {
+    app: {
+      name: "E-SARMAYA",
+      phone: "03165984500",
+      logoUrl: "",
+      taxRate: 16.0,
+      serviceCharge: 0,
+      remoteKillUrl: ""
+    },
+    passwords: {
+      master: "owner786",
+      admin: "admin123",
+      cashier: "cash123",
+      kitchen: "kitchen123"
+    },
+    tables: [
+      { id: "T1", name: "Table 01", status: "available" },
+      { id: "T2", name: "Table 02", status: "available" },
+      { id: "T3", name: "Table 03", status: "available" },
+      { id: "T4", name: "Table 04", status: "available" },
+      { id: "T5", name: "Table 05", status: "available" },
+      { id: "T6", name: "Table 06", status: "available" },
+      { id: "TAKE", name: "Takeaway Zone", status: "takeaway" }
+    ],
+    menu: [
+      { id: "M1", name: "Mutton Karahi", price: 1850, category: "Main Course", img: "" },
+      { id: "M2", name: "Chicken Handi", price: 1350, category: "Main Course", img: "" },
+      { id: "M3", name: "Seekh Kabab Platter", price: 850, category: "Starters", img: "" },
+      { id: "M4", name: "Garlic Butter Naan", price: 120, category: "Starters", img: "" },
+      { id: "M5", name: "Mint Margarita", price: 280, category: "Beverages", img: "" },
+      { id: "M6", name: "Shahi Kheer Cup", price: 220, category: "Desserts", img: "" }
+    ],
+    orders: [],
+    sales: []
+  };
+
+  // ── RUNTIME STATE REGISTRIES ──
+  let activeUser = null;
+  let currentCart = [];
+  let cartOrigin = null; 
+  let activeCategoryFilter = "ALL";
+  let searchFilterQuery = "";
+
+  // ── LOCAL STORAGE ENGINE INTEGRATION ──
+  async function initDatabase() {
+    // Assert and instantiate standard operational status flags
+    if (!localStorage.getItem("es_app_status")) {
+      localStorage.setItem("es_app_status", "active");
+    }
+
+    if (localStorage.getItem("es_restaurant_db")) {
+      DB = JSON.parse(localStorage.getItem("es_restaurant_db"));
+    } else {
+      localStorage.setItem("es_restaurant_db", JSON.stringify(DB));
+    }
+    
+    // Initiate execution sequence verification loops
+    await executeRemoteKillVerification();
+    applySystemLockAssessment();
+    applyDynamicBrandingEngine();
+  }
+
+  function commitDataToStorage() {
+    localStorage.setItem("es_restaurant_db", JSON.stringify(DB));
+    applyDynamicBrandingEngine();
+  }
+
+  // ── REMOTE KILL SWITCH EXECUTOR ──
+  async function executeRemoteKillVerification() {
+    const remoteUrl = DB.app.remoteKillUrl;
+    if (remoteUrl && remoteUrl.trim() !== "") {
+      try {
+        const response = await fetch(remoteUrl, { cache: "no-store" });
+        if (response.ok) {
+          const text = await response.text();
+          if (text.trim().toLowerCase() === "suspended") {
+            localStorage.setItem("es_app_status", "suspended");
+          } else {
+            localStorage.setItem("es_app_status", "active");
+          }
+        }
+      } catch (e) {
+        console.warn("Unable to check remote security lock. Using local state data.", e);
+      }
+    }
+  }
+
+  // ── SECURITY ACCESS LOCKS AND LOCKOUTS ──
+  function applySystemLockAssessment() {
+    const appStatus = localStorage.getItem("es_app_status") || "active";
+    const overlay = document.getElementById("killSwitchOverlay");
+    if (appStatus === "suspended") {
+      overlay.style.display = "flex";
+      document.getElementById("app").style.display = "none";
+      document.getElementById("loginScreen").style.display = "none";
+    } else {
+      overlay.style.display = "none";
+    }
+  }
+
+  function attemptEmergencyUnlock() {
+    const inputPass = document.getElementById("emergencyUnlockPass").value;
+    const errorMsg = document.getElementById("emergencyUnlockError");
+    
+    if (inputPass === DB.passwords.master) {
+      localStorage.setItem("es_app_status", "active");
+      errorMsg.style.display = "none";
+      document.getElementById("emergencyUnlockPass").value = "";
+      applySystemLockAssessment();
+      showToast("🔓 Master Override Authenticated. System Re-activated.");
+      
+      if (activeUser) {
+        document.getElementById("app").style.display = "flex";
+      } else {
+        document.getElementById("loginScreen").style.display = "flex";
+      }
+    } else {
+      errorMsg.style.display = "block";
+    }
+  }
+
+  // ── DYNAMIC BRANDING INJECTION ENGINE ──
+  function applyDynamicBrandingEngine() {
+    const brandName = DB.app.name || "E-SARMAYA";
+    const brandPhone = DB.app.phone || "03165984500";
+    const logoUrl = DB.app.logoUrl || "";
+
+    document.getElementById("appTitleTag").innerText = `${brandName} – Restaurant Management System`;
+
+    // Dynamic brand elements textual replacements
+    const nameTargets = document.querySelectorAll(".appNameText");
+    nameTargets.forEach(el => {
+      el.innerText = brandName.toUpperCase();
+    });
+
+    const phoneTargets = [
+      document.getElementById("loginSystemPhone"),
+      document.getElementById("billContactDetails")
+    ];
+    phoneTargets.forEach(el => {
+      if (el) el.innerText = `📞 ${brandPhone}`;
+    });
+
+    // Dynamic image asset injection logic
+    const imageContainerMappings = [
+      { imgId: "loginLogoImg", containerId: "loginLogoContainer" },
+      { imgId: "sidebarLogoImg", containerId: "sidebarLogoContainer" },
+      { imgId: "topbarLogoImg", containerId: "topbarLogoContainer" },
+      { imgId: "billLogoImg", containerId: "billLogoContainer" },
+      { imgId: "cartLogoImg", containerId: "cartLogoContainer" }
+    ];
+
+    imageContainerMappings.forEach(mapping => {
+      const imgEl = document.getElementById(mapping.imgId);
+      const containerEl = document.getElementById(mapping.containerId);
+      if (imgEl && containerEl) {
+        if (logoUrl.trim() !== "") {
+          imgEl.src = logoUrl;
+          containerEl.style.display = (mapping.containerId === "topbarLogoContainer" || mapping.containerId === "cartLogoContainer") ? "inline-flex" : "flex";
+        } else {
+          imgEl.src = "";
+          containerEl.style.display = "none";
+        }
+      }
+    });
+  }
+
+  // ── AUTHENTICATION AND LOGOUT CONTROLLERS ──
+  function togglePw() {
+    const input = document.getElementById("loginPass");
+    input.type = (input.type === "password") ? "text" : "password";
+  }
+
+  function doLogin() {
+    const userVal = document.getElementById("loginUser").value.trim().toLowerCase();
+    const passVal = document.getElementById("loginPass").value;
+    const errEl = document.getElementById("loginError");
+
+    let matchedRole = null;
+    let displayName = "";
+
+    // Authenticate credentials against dynamic DB records
+    if (userVal === "admin" && passVal === DB.passwords.admin) {
+      matchedRole = "Administrator";
+      displayName = "Main Admin";
+    } else if (userVal === "cashier" && passVal === DB.passwords.cashier) {
+      matchedRole = "Cashier";
+      displayName = "Cashier Station";
+    } else if (userVal === "kitchen" && passVal === DB.passwords.kitchen) {
+      matchedRole = "Kitchen Staff";
+      displayName = "Kitchen Terminal";
+    } else if (userVal === "owner" && passVal === DB.passwords.master) {
+      matchedRole = "Developer System Owner";
+      displayName = "Enterprise Developer";
+    }
+
+    if (matchedRole) {
+      activeUser = { username: userVal, role: matchedRole, name: displayName };
+      errEl.style.display = "none";
+      
+      if (document.getElementById("rememberMe").checked) {
+        localStorage.setItem("es_active_user", JSON.stringify(activeUser));
+      }
+
+      bootstrapWorkspace();
+    } else {
+      errEl.style.display = "block";
+    }
+  }
+
+  function bootstrapWorkspace() {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+    
+    document.getElementById("activeUserName").innerText = activeUser.name;
+    document.getElementById("activeUserRole").innerText = activeUser.role;
+    document.getElementById("userAvatar").innerText = activeUser.name.charAt(0).toUpperCase();
+
+    // Render operations boards
+    renderFloorLayout();
+    renderKitchenQueue();
+    generateReportData();
+    populateCategorySelectors();
+    initSettingsView();
+    updateDashboardTelemetry();
+  }
+
+  function doLogout() {
+    activeUser = null;
+    localStorage.removeItem("es_active_user");
+    document.getElementById("app").style.display = "none";
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("loginUser").value = "";
+    document.getElementById("loginPass").value = "";
+    showToast("🚪 Session Terminated.");
+  }
+
+  // ── FRAMEWORK ROUTING PATHS ──
+  function switchPage(pageId, navElement) {
+    const pages = document.querySelectorAll(".page");
+    pages.forEach(p => p.classList.remove("active"));
+    
+    const targetPage = document.getElementById(`page-${pageId}`);
+    if (targetPage) {
+      targetPage.classList.add("active");
+    }
+
+    const navItems = document.querySelectorAll(".navItem");
+    navItems.forEach(i => i.classList.remove("active"));
+    
+    if (navElement) {
+      navElement.classList.add("active");
+    }
+
+    document.getElementById("currentPageTitle").innerText = pageId.charAt(0).toUpperCase() + pageId.slice(1) + " Workspace";
+
+    // Refresh dynamic targets
+    if (pageId === "dashboard") {
+      updateDashboardTelemetry();
+    } else if (pageId === "tables") {
+      renderFloorLayout();
+    } else if (pageId === "kitchen") {
+      renderKitchenQueue();
+    } else if (pageId === "reports") {
+      generateReportData();
+    } else if (pageId === "settings") {
+      initSettingsView();
+    }
+  }
+
+  function toggleSidebar() {
+    document.querySelector(".sidebar").classList.toggle("open");
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.innerText = msg;
+    toast.classList.add("show");
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 3000);
+  }
+
+  function startLiveClock() {
+    const clock = document.getElementById("systemClock");
+    setInterval(() => {
+      const now = new Date();
+      clock.innerText = now.toLocaleString("en-US", { hour12: true });
+    }, 1000);
+  }
+
+  // ── POINT OF SALE TABLE LAYOUTS ──
+  function renderFloorLayout() {
+    const grid = document.getElementById("floorLayoutGrid");
+    grid.innerHTML = "";
+
+    DB.tables.forEach(t => {
+      const card = document.createElement("div");
+      card.className = `tableCard ${t.status}`;
+      card.onclick = () => handleTableAction(t);
+
+      const activeOrd = DB.orders.find(o => o.tableId === t.id && o.status !== "settled");
+      let itemSummary = "Available for dining";
+      let amountSummary = "";
+
+      if (activeOrd) {
+        itemSummary = `${activeOrd.items.reduce((sum, i) => sum + i.qty, 0)} Items Added`;
+        amountSummary = `Rs. ${activeOrd.grandTotal.toFixed(2)}`;
+      }
+
+      card.innerHTML = `
+        <div class="tableNum">${t.id === "TAKE" ? "🛍️" : t.id}</div>
+        <div class="tableName">${t.name}</div>
+        <div class="tableStatus" style="font-size:10px; margin-bottom:5px;">${t.status.toUpperCase()}</div>
+        <div style="font-size: 11px; color: var(--text2); font-weight: 500;">${itemSummary}</div>
+        <div style="font-size:12px; font-weight:700; color:var(--gold); margin-top:4px;">${amountSummary}</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function handleTableAction(table) {
+    const existingOrder = DB.orders.find(o => o.tableId === table.id && o.status !== "settled");
+    
+    if (existingOrder) {
+      cartOrigin = { type: "table", tableId: table.id, orderId: existingOrder.id };
+      currentCart = [...existingOrder.items];
+      openOrderModal(existingOrder);
+    } else {
+      cartOrigin = { type: "table", tableId: table.id, orderId: null };
+      currentCart = [];
+      openOrderModal();
+    }
+  }
+
+  function openNewOrderModal() {
+    cartOrigin = { type: "custom", tableId: "TAKE", orderId: null };
+    currentCart = [];
+    openOrderModal();
+  }
+
+  // ── POS WORKSTATION OPERATIONAL ACTIONS ──
+  function openOrderModal(existingOrder = null) {
+    document.getElementById("orderModal").classList.add("show");
+    
+    const label = document.getElementById("cartOriginLabel");
+    if (cartOrigin.type === "table") {
+      const tbl = DB.tables.find(t => t.id === cartOrigin.tableId);
+      label.innerText = `POS Workspace - ${tbl.name}`;
+    } else {
+      label.innerText = "POS Workspace - Custom Dynamic Order";
+    }
+
+    if (existingOrder) {
+      document.getElementById("cartDiscount").value = existingOrder.discount;
+    } else {
+      document.getElementById("cartDiscount").value = 0;
+    }
+
+    renderMenuCategories();
+    renderMenuItems();
+    updateCartDOM();
+  }
+
+  function closeOrderModal() {
+    document.getElementById("orderModal").classList.remove("show");
+  }
+
+  function populateCategorySelectors() {
+    const filter = document.getElementById("reportCategoryFilter");
+    filter.innerHTML = `<option value="ALL">All Categories</option>`;
+    const categories = [...new Set(DB.menu.map(i => i.category))];
+    categories.forEach(c => {
+      filter.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+  }
+
+  function renderMenuCategories() {
+    const container = document.getElementById("menuCategoriesContainer");
+    container.innerHTML = "";
+    
+    const categories = ["ALL", ...new Set(DB.menu.map(i => i.category))];
+    categories.forEach(cat => {
+      const chip = document.createElement("div");
+      chip.className = `catChip ${activeCategoryFilter === cat ? "active" : ""}`;
+      chip.innerText = cat;
+      chip.onclick = () => {
+        activeCategoryFilter = cat;
+        renderMenuCategories();
+        renderMenuItems();
+      };
+      container.appendChild(chip);
+    });
+  }
+
+  function handleMenuSearch() {
+    searchFilterQuery = document.getElementById("menuSearchInput").value.trim().toLowerCase();
+    renderMenuItems();
+  }
+
+  function renderMenuItems() {
+    const grid = document.getElementById("menuItemsGrid");
+    grid.innerHTML = "";
+
+    const filtered = DB.menu.filter(item => {
+      const catMatch = activeCategoryFilter === "ALL" || item.category === activeCategoryFilter;
+      const qMatch = item.name.toLowerCase().includes(searchFilterQuery);
+      return catMatch && qMatch;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="emptyState" style="grid-column:1/-1;"><div class="ico">🍔</div>No culinary items matched.</div>`;
+      return;
+    }
+
+    filtered.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "menuItemCard";
+      card.onclick = () => addItemToCart(item);
+
+      let imageRenderBlock = `🍲`;
+      if (item.img && item.img.trim() !== "") {
+        imageRenderBlock = `<img src="${item.img}" alt="${item.name}">`;
+      }
+
+      card.innerHTML = `
+        <div class="menuItemImg">${imageRenderBlock}</div>
+        <div class="miName">${item.name}</div>
+        <div class="miPrice">Rs. ${item.price.toFixed(0)}</div>
+        <div class="miCat">${item.category}</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // ── CART CONTROLLER AGGREGATIONS ──
+  function addItemToCart(item) {
+    const match = currentCart.find(i => i.id === item.id);
+    if (match) {
+      match.qty++;
+    } else {
+      currentCart.push({ ...item, qty: 1, prepStatus: "pending" });
+    }
+    updateCartDOM();
+  }
+
+  function updateQty(itemId, value) {
+    const match = currentCart.find(i => i.id === itemId);
+    if (match) {
+      match.qty += value;
+      if (match.qty <= 0) {
+        currentCart = currentCart.filter(i => i.id !== itemId);
+      }
+    }
+    updateCartDOM();
+  }
+
+  function updateCartDOM() {
+    const container = document.getElementById("cartItemsContainer");
+    container.innerHTML = "";
+
+    if (currentCart.length === 0) {
+      container.innerHTML = `<div class="emptyState"><div class="ico">🛒</div>Staged cart is empty.</div>`;
+      document.getElementById("cartItemsCount").innerText = "No items loaded";
+      calculateStagedTotals();
+      return;
+    }
+
+    let totalQuantityCount = 0;
+    currentCart.forEach(item => {
+      totalQuantityCount += item.qty;
+      const el = document.createElement("div");
+      el.className = "cartItem";
+
+      let imgBlock = `🍲`;
+      if (item.img && item.img.trim() !== "") {
+        imgBlock = `<img src="${item.img}" alt="${item.name}">`;
+      }
+
+      el.innerHTML = `
+        <div class="cartItemImg">${imgBlock}</div>
+        <div class="cartItemName">
+          <div>${item.name}</div>
+          <div class="cartItemSub">Rs. ${item.price.toFixed(0)} each</div>
+        </div>
+        <div class="qtyCtrl">
+          <button class="qtyBtn" onclick="updateQty('${item.id}', -1)">-</button>
+          <span style="font-weight:700; font-size:13px; min-width:14px; text-align:center;">${item.qty}</span>
+          <button class="qtyBtn" onclick="updateQty('${item.id}', 1)">+</button>
+        </div>
+        <div class="cartItemPrice">Rs. ${(item.price * item.qty).toFixed(0)}</div>
+      `;
+      container.appendChild(el);
+    });
+
+    document.getElementById("cartItemsCount").innerText = `${totalQuantityCount} Staged quantities`;
+    calculateStagedTotals();
+  }
+
+  function calculateStagedTotals() {
+    const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const taxRate = DB.app.taxRate || 0.0;
+    const tax = subtotal * (taxRate / 100);
+    const discount = parseFloat(document.getElementById("cartDiscount").value) || 0;
+    const total = (subtotal + tax) - discount;
+
+    document.getElementById("cartSubtotal").innerText = `Rs. ${subtotal.toFixed(2)}`;
+    document.getElementById("cartTax").innerText = `Rs. ${tax.toFixed(2)}`;
+    document.getElementById("cartGrandTotal").innerText = `Rs. ${total.toFixed(2)}`;
+  }
+
+  function cancelStagedOrder() {
+    currentCart = [];
+    updateCartDOM();
+    showToast("🛒 Staged cart cleared.");
+  }
+
+  function submitStagedOrder() {
+    if (currentCart.length === 0) {
+      showToast("⚠️ Order has zero registered items.");
+      return;
+    }
+
+    const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const taxRate = DB.app.taxRate || 0.0;
+    const tax = subtotal * (taxRate / 100);
+    const discount = parseFloat(document.getElementById("cartDiscount").value) || 0;
+    const total = (subtotal + tax) - discount;
+
+    const orderId = cartOrigin.orderId || `ORD-${Date.now().toString().slice(-6)}`;
+    const nowTimestamp = new Date().toLocaleString();
+
+    const orderData = {
+      id: orderId,
+      tableId: cartOrigin.tableId,
+      timestamp: nowTimestamp,
+      items: [...currentCart],
+      subtotal: subtotal,
+      tax: tax,
+      discount: discount,
+      grandTotal: total,
+      status: "pending"
+    };
+
+    if (cartOrigin.orderId) {
+      const idx = DB.orders.findIndex(o => o.id === cartOrigin.orderId);
+      if (idx !== -1) {
+        DB.orders[idx] = orderData;
+      }
+    } else {
+      DB.orders.push(orderData);
+    }
+
+    const tab = DB.tables.find(t => t.id === cartOrigin.tableId);
+    if (tab && tab.id !== "TAKE") {
+      tab.status = "occupied";
+    }
+
+    commitDataToStorage();
+    closeOrderModal();
+    renderFloorLayout();
+    renderKitchenQueue();
+    updateDashboardTelemetry();
+    showToast(`🚀 Order ${orderId} saved.`);
+    launchReceiptBill(orderData);
+  }
+
+  // ── INVOICING AND RECEIPT DISPATCH ──
+  function launchReceiptBill(order) {
+    document.getElementById("billModal").classList.add("show");
+    
+    const tbl = DB.tables.find(t => t.id === order.tableId);
+    
+    document.getElementById("billTimestamp").innerText = order.timestamp;
+    document.getElementById("billRef").innerText = order.id;
+    document.getElementById("billOrigin").innerText = tbl ? tbl.name : "Takeaway Station";
+
+    const body = document.getElementById("billItemsBody");
+    body.innerHTML = "";
+
+    order.items.forEach(i => {
+      const row = document.createElement("div");
+      row.className = "invRow";
+      row.innerHTML = `
+        <span style="flex:1;">${i.name}</span>
+        <span style="width:40px; text-align:center;">${i.qty}</span>
+        <span style="width:70px; text-align:right;">Rs. ${(i.price * i.qty).toFixed(0)}</span>
+      `;
+      body.appendChild(row);
+    });
+
+    document.getElementById("billSubtotal").innerText = `Rs. ${order.subtotal.toFixed(2)}`;
+    document.getElementById("billTax").innerText = `Rs. ${order.tax.toFixed(2)}`;
+    document.getElementById("billDiscount").innerText = `-Rs. ${order.discount.toFixed(2)}`;
+    document.getElementById("billGrandTotal").innerText = `Rs. ${order.grandTotal.toFixed(2)}`;
+
+    if (tbl && tbl.id !== "TAKE") {
+      tbl.status = "bill-pending";
+      commitDataToStorage();
+      renderFloorLayout();
+    }
+  }
+
+  function closeBillModal() {
+    document.getElementById("billModal").classList.remove("show");
+  }
+
+  function printInvoiceContents() {
+    const targetRef = document.getElementById("billRef").innerText;
+    const order = DB.orders.find(o => o.id === targetRef);
+    
+    if (order) {
+      order.status = "completed";
+      
+      const tbl = DB.tables.find(t => t.id === order.tableId);
+      if (tbl && tbl.id !== "TAKE") {
+        tbl.status = "available";
+      }
+
+      // Check for existing invoice logging duplication
+      const saleLogged = DB.sales.find(s => s.orderId === order.id);
+      if (!saleLogged) {
+        DB.sales.push({
+          orderId: order.id,
+          timestamp: new Date().toISOString().split('T')[0],
+          origin: tbl ? tbl.name : "Takeaway Station",
+          itemsSummary: order.items.map(i => `${i.name} (${i.qty})`).join(", "),
+          subtotal: order.subtotal,
+          tax: order.tax,
+          discount: order.discount,
+          grandTotal: order.grandTotal,
+          categoryMapping: order.items.map(i => i.category)
+        });
+      }
+
+      commitDataToStorage();
+    }
+
+    const dynamicReceiptHeader = document.getElementById("printArea").innerHTML;
+    const win = window.open("", "PRINT", "height=600,width=400");
+    win.document.write(`
+      <html>
+      <head>
+        <title>Invoice Receipt</title>
+        <style>
+          body { font-family: monospace; color: #000; padding: 20px; background: #fff; }
+          .invoicePrint { width: 100%; max-width: 300px; margin: 0 auto; }
+          .invRow { display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px; }
+          .bold { font-weight: bold; }
+          .total { font-size: 14px; font-weight: bold; border-top: 1px dashed #000; padding-top: 6px; }
+          .sub { text-align: center; font-size: 11px; margin-top: 2px; }
+          hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+          img { max-height: 60px; display: block; margin: 0 auto 10px auto; filter: grayscale(100%); }
+        </style>
+      </head>
+      <body>
+        <div class="invoicePrint">${dynamicReceiptHeader}</div>
+        <script>
+          window.onload = function() {
+            window.print();
+            window.close();
+          }
+        <\/script>
+      </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+
+    closeBillModal();
+    renderFloorLayout();
+    updateDashboardTelemetry();
+    generateReportData();
+  }
+
+  // ── KITCHEN STATUS PIPELINE ──
+  function renderKitchenQueue() {
+    const grid = document.getElementById("kitchenGridContainer");
+    grid.innerHTML = "";
+
+    const activeOrders = DB.orders.filter(o => o.status !== "completed");
+    let counter = 0;
+
+    activeOrders.forEach(o => {
+      const activePrepItems = o.items.filter(i => i.prepStatus !== "delivered");
+      if (activePrepItems.length === 0) return;
+
+      counter += activePrepItems.length;
+      const card = document.createElement("div");
+      card.className = "kitchenCard";
+
+      let headClass = "pending";
+      if (activePrepItems.some(i => i.prepStatus === "preparing")) headClass = "preparing";
+      if (activePrepItems.every(i => i.prepStatus === "ready")) headClass = "ready";
+
+      const tblName = DB.tables.find(t => t.id === o.tableId)?.name || "Direct custom Ticket";
+
+      card.innerHTML = `
+        <div class="kitchenCardHead ${headClass}">
+          <div style="font-weight:700;">${o.id}</div>
+          <div style="font-size:11px; color:var(--text2);">${tblName}</div>
+        </div>
+        <div class="kitchenItems">
+          ${activePrepItems.map(item => `
+            <div class="kitchenItem">
+              <div>
+                <span style="font-weight:700; color:var(--gold);">${item.qty}x</span> ${item.name}
+                <div style="font-size:10px; color:var(--text3);">${item.category}</div>
+              </div>
+              <div>
+                <button class="btn ${item.prepStatus === 'pending' ? 'btn-blue' : 'btn-green'}" style="padding:4px 8px; font-size:11px;" onclick="advancePrepStep('${o.id}', '${item.id}', '${item.prepStatus}')">
+                  ${item.prepStatus === 'pending' ? '🍳 Prep' : '✅ Ready'}
+                </button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    document.getElementById("kitchenQueueCount").innerText = `${counter} Active Tasks Pending`;
+  }
+
+  function advancePrepStep(orderId, itemId, currentStatus) {
+    const order = DB.orders.find(o => o.id === orderId);
+    if (order) {
+      const item = order.items.find(i => i.id === itemId);
+      if (item) {
+        if (currentStatus === "pending") {
+          item.prepStatus = "preparing";
+          showToast(`🍳 Preparations initialized for ${item.name}.`);
+        } else if (currentStatus === "preparing") {
+          item.prepStatus = "ready";
+          showToast(`✅ ${item.name} is ready to serve.`);
+        }
+        commitDataToStorage();
+        renderKitchenQueue();
+        updateDashboardTelemetry();
+      }
+    }
+  }
+
+  // ── REVENUE METRICS AND ANALYTICS LEDGERS ──
+  function updateDashboardTelemetry() {
+    const todayISOStr = new Date().toISOString().split('T')[0];
+    
+    const todaySales = DB.sales.filter(s => s.timestamp === todayISOStr);
+    const revenueSum = todaySales.reduce((sum, s) => sum + s.grandTotal, 0);
+    
+    document.getElementById("statRevenue").innerText = `Rs. ${revenueSum.toFixed(2)}`;
+    document.getElementById("statOrders").innerText = todaySales.length.toString();
+
+    const activeT = DB.tables.filter(t => t.status === "occupied" || t.status === "bill-pending").length;
+    document.getElementById("statOccupancy").innerText = `${activeT} / ${DB.tables.length - 1}`;
+
+    let pendingKitchenCount = 0;
+    DB.orders.filter(o => o.status !== "completed").forEach(o => {
+      pendingKitchenCount += o.items.filter(i => i.prepStatus === "pending" || i.prepStatus === "preparing").length;
+    });
+    document.getElementById("statPendingPrep").innerText = pendingKitchenCount;
+
+    // Load recent activity panel
+    const recentActivityBody = document.getElementById("recentActivityBody");
+    recentActivityBody.innerHTML = "";
+    
+    const activityList = DB.sales.slice(-5).reverse();
+    if (activityList.length === 0) {
+      recentActivityBody.innerHTML = `<tr><td colspan="5" class="emptyState" style="text-align:center;">No settled transactions recorded.</td></tr>`;
+    } else {
+      activityList.forEach(s => {
+        recentActivityBody.innerHTML += `
+          <tr>
+            <td>Today</td>
+            <td><strong>${s.orderId}</strong></td>
+            <td>${s.origin}</td>
+            <td>Rs. ${s.grandTotal.toFixed(2)}</td>
+            <td><span class="badge badge-green">Settled</span></td>
+          </tr>
+        `;
+      });
+    }
+
+    // Process catalog performance charts
+    const popularItemsBody = document.getElementById("popularItemsBody");
+    popularItemsBody.innerHTML = "";
+
+    const catalogSalesMap = {};
+    DB.orders.forEach(o => {
+      o.items.forEach(i => {
+        catalogSalesMap[i.name] = (catalogSalesMap[i.name] || 0) + i.qty;
+      });
+    });
+
+    const performanceQueryArray = Object.keys(catalogSalesMap).map(k => {
+      const match = DB.menu.find(m => m.name === k);
+      return { name: k, qty: catalogSalesMap[k], price: match ? match.price : 0, category: match ? match.category : "Standard Category" };
+    }).sort((a, b) => b.qty - a.qty).slice(0, 5);
+
+    if (performanceQueryArray.length === 0) {
+      popularItemsBody.innerHTML = `<tr><td colspan="4" class="emptyState" style="text-align:center;">No tracking parameters generated.</td></tr>`;
+    } else {
+      performanceQueryArray.forEach(item => {
+        popularItemsBody.innerHTML += `
+          <tr>
+            <td><strong>${item.name}</strong></td>
+            <td>${item.category}</td>
+            <td>${item.qty} units</td>
+            <td style="color:var(--gold); font-weight:700;">Rs. ${(item.qty * item.price).toFixed(0)}</td>
+          </tr>
+        `;
+      });
+    }
+  }
+
+  function generateReportData() {
+    const tableBody = document.getElementById("reportLedgerBody");
+    tableBody.innerHTML = "";
+
+    const selectedDate = document.getElementById("reportDateSelect").value;
+    const selectedCat = document.getElementById("reportCategoryFilter").value;
+
+    let targetDateStr = selectedDate;
+    if (!targetDateStr) {
+      targetDateStr = new Date().toISOString().split('T')[0];
+      document.getElementById("reportDateSelect").value = targetDateStr;
+    }
+
+    const filteredSales = DB.sales.filter(s => {
+      const dateMatch = s.timestamp === targetDateStr;
+      const catMatch = selectedCat === "ALL" || s.categoryMapping.includes(selectedCat);
+      return dateMatch && catMatch;
+    });
+
+    if (filteredSales.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="8" class="emptyState" style="text-align:center;">No audit trails matches the dynamic query parameters.</td></tr>`;
+      return;
+    }
+
+    filteredSales.forEach(s => {
+      tableBody.innerHTML += `
+        <tr>
+          <td><strong>${s.orderId}</strong></td>
+          <td>${s.timestamp}</td>
+          <td>${s.origin}</td>
+          <td><span style="font-size:11px; color:var(--text2);">${s.itemsSummary}</span></td>
+          <td>Rs. ${s.subtotal.toFixed(2)}</td>
+          <td>Rs. ${s.tax.toFixed(2)}</td>
+          <td>Rs. ${s.discount.toFixed(2)}</td>
+          <td style="color:var(--gold); font-weight:700;">Rs. ${s.grandTotal.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+  }
+
+  function resetReportFilters() {
+    document.getElementById("reportDateSelect").value = new Date().toISOString().split('T')[0];
+    document.getElementById("reportCategoryFilter").value = "ALL";
+    generateReportData();
+    showToast("🔄 Filters set to standard date values.");
+  }
+
+  function exportSalesReport() {
+    let reportDocText = `=== E-SARMAYA SALES REPORT OUTLINE ===\r\n`;
+    reportDocText += `Printed: ${new Date().toLocaleString()}\r\n\r\n`;
+    reportDocText += `Invoice ID\tTimestamp\tOrigin Point\tPurchased Summary\tSubtotal\tTax\tDiscount\tTotal Pay\r\n`;
+    
+    DB.sales.forEach(s => {
+      reportDocText += `${s.orderId}\t${s.timestamp}\t${s.origin}\t[${s.itemsSummary}]\t${s.subtotal}\t${s.tax}\t${s.discount}\t${s.grandTotal}\r\n`;
+    });
+
+    const textBlob = new Blob([reportDocText], { type: "text/plain;charset=utf-8" });
+    const downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(textBlob);
+    downloadLink.download = `SalesReport_${Date.now()}.txt`;
+    downloadLink.click();
+    showToast("💾 Sales data statement exported.");
+  }
+
+  // ── SETTINGS PAGE CONTROLLERS ──
+  function initSettingsView() {
+    document.getElementById("cfgAppName").value = DB.app.name || "";
+    document.getElementById("cfgLogoUrl").value = DB.app.logoUrl || "";
+    document.getElementById("cfgAppPhone").value = DB.app.phone || "";
+    document.getElementById("cfgTaxRate").value = DB.app.taxRate || 0.0;
+    document.getElementById("cfgServiceCharge").value = DB.app.serviceCharge || 0;
+
+    previewConfigLogo(DB.app.logoUrl || "");
+
+    // Load tables configurations sub-panel
+    const tableListContainer = document.getElementById("settingsTableList");
+    tableListContainer.innerHTML = "";
+    DB.tables.forEach(t => {
+      tableListContainer.innerHTML += `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface2); padding:6px 12px; border-radius:6px; margin-bottom:6px; font-size:12px;">
+          <span><strong>${t.id}</strong> - ${t.name} (${t.status})</span>
+          ${t.id !== "TAKE" ? `<button class="btn btn-red" style="padding:2px 6px; font-size:10px;" onclick="removeDiningTable('${t.id}')">❌ Remove</button>` : `<span style="font-size:10px; color:var(--text3)">Required Field</span>`}
+        </div>
+      `;
+    });
+
+    // Load catalog index sub-panel
+    const menuListContainer = document.getElementById("settingsMenuList");
+    menuListContainer.innerHTML = "";
+    DB.menu.forEach(item => {
+      menuListContainer.innerHTML += `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface2); padding:6px 12px; border-radius:6px; margin-bottom:6px; font-size:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:24px; height:24px; background:var(--surface); border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+              ${item.img ? `<img src="${item.img}" style="width:100%; height:100%; object-fit:cover;">` : `🍲`}
+            </div>
+            <span><strong>${item.name}</strong> - Rs. ${item.price.toFixed(0)} <span style="color:var(--text3)">(${item.category})</span></span>
+          </div>
+          <button class="btn btn-red" style="padding:2px 6px; font-size:10px;" onclick="removeMenuItem('${item.id}')">❌ Remove</button>
+        </div>
+      `;
+    });
+  }
+
+  function previewConfigLogo(url) {
+    const preview = document.getElementById("cfgLogoPreview");
+    if (url && url.trim() !== "") {
+      preview.src = url;
+      preview.style.display = "block";
+    } else {
+      preview.src = "";
+      preview.style.display = "none";
+    }
+  }
+
+  function saveBrandingConfig() {
+    DB.app.name = document.getElementById("cfgAppName").value.trim() || "E-SARMAYA";
+    DB.app.logoUrl = document.getElementById("cfgLogoUrl").value.trim();
+    DB.app.phone = document.getElementById("cfgAppPhone").value.trim() || "03165984500";
+    DB.app.taxRate = parseFloat(document.getElementById("cfgTaxRate").value) || 0.0;
+    DB.app.serviceCharge = parseFloat(document.getElementById("cfgServiceCharge").value) || 0;
+
+    commitDataToStorage();
+    initSettingsView();
+    showToast("💾 Branding configurations updated.");
+  }
+
+  function addNewDiningTable() {
+    const input = document.getElementById("newTableNameInput");
+    const name = input.value.trim();
+    if (!name) return;
+
+    const nextId = "T" + (DB.tables.filter(t => t.id !== "TAKE").length + 1);
+    DB.tables.push({ id: nextId, name: name, status: "available" });
+    
+    commitDataToStorage();
+    input.value = "";
+    initSettingsView();
+    showToast(`🍽️ Table ${name} appended to configurations.`);
+  }
+
+  function removeDiningTable(id) {
+    DB.tables = DB.tables.filter(t => t.id !== id);
+    commitDataToStorage();
+    initSettingsView();
+    showToast(`🗑️ Table location removed.`);
+  }
+
+  function addNewMenuItem() {
+    const name = document.getElementById("newMenuItemName").value.trim();
+    const price = parseFloat(document.getElementById("newMenuItemPrice").value) || 0;
+    const category = document.getElementById("newMenuItemCategory").value;
+    const imgUrl = document.getElementById("newMenuItemImgUrl").value.trim();
+
+    if (!name || price <= 0) {
+      showToast("⚠️ Dynamic criteria limits not satisfied.");
+      return;
+    }
+
+    const nextId = "M" + (DB.menu.length + 1);
+    DB.menu.push({ id: nextId, name: name, price: price, category: category, img: imgUrl });
+    
+    commitDataToStorage();
+    
+    document.getElementById("newMenuItemName").value = "";
+    document.getElementById("newMenuItemPrice").value = "";
+    document.getElementById("newMenuItemImgUrl").value = "";
+
+    initSettingsView();
+    populateCategorySelectors();
+    showToast(`🍲 Added ${name} to culinary inventory.`);
+  }
+
+  function removeMenuItem(id) {
+    DB.menu = DB.menu.filter(m => m.id !== id);
+    commitDataToStorage();
+    initSettingsView();
+    populateCategorySelectors();
+    showToast(`🗑️ Item removed from culinary catalog.`);
+  }
+
+  // ── OWNER / DEVELOPER HIGH SECURITY SETTINGS ──
+  function verifyAndUnlockOwnerSettings() {
+    const enteredPass = document.getElementById("ownerVerificationPass").value;
+    if (enteredPass === DB.passwords.master) {
+      document.getElementById("ownerAuthContainer").style.display = "none";
+      document.getElementById("ownerControlContainer").style.display = "block";
+      
+      // Load current system settings configurations
+      document.getElementById("ownerAppStatus").value = localStorage.getItem("es_app_status") || "active";
+      document.getElementById("ownerRemoteKillUrl").value = DB.app.remoteKillUrl || "";
+      document.getElementById("ownerMasterPassEdit").value = DB.passwords.master;
+      document.getElementById("ownerAdminPassEdit").value = DB.passwords.admin;
+      document.getElementById("ownerCashierPassEdit").value = DB.passwords.cashier;
+      document.getElementById("ownerKitchenPassEdit").value = DB.passwords.kitchen;
+    } else {
+      showToast("❌ Incorrect Master Security Credentials. Access Denied.");
+    }
+  }
+
+  function saveOwnerSystemOverrides() {
+    const newStatusState = document.getElementById("ownerAppStatus").value;
+
+    DB.app.remoteKillUrl = document.getElementById("ownerRemoteKillUrl").value.trim();
+    DB.passwords.master = document.getElementById("ownerMasterPassEdit").value.trim() || DB.passwords.master;
+    DB.passwords.admin = document.getElementById("ownerAdminPassEdit").value.trim() || DB.passwords.admin;
+    DB.passwords.cashier = document.getElementById("ownerCashierPassEdit").value.trim() || DB.passwords.cashier;
+    DB.passwords.kitchen = document.getElementById("ownerKitchenPassEdit").value.trim() || DB.passwords.kitchen;
+
+    commitDataToStorage();
+    localStorage.setItem("es_app_status", newStatusState);
+
+    showToast("⚙️ Root properties updated.");
+
+    if (newStatusState === "suspended") {
+      applySystemLockAssessment();
+    } else {
+      document.getElementById("ownerVerificationPass").value = "";
+      document.getElementById("ownerAuthContainer").style.display = "block";
+      document.getElementById("ownerControlContainer").style.display = "none";
+    }
+  }
+
+  // ── SYSTEM LIFE CYCLE BOOTSTRAP ──
+  window.onload = function() {
+    initDatabase();
+    startLiveClock();
+
+    const savedUserSession = localStorage.getItem("es_active_user");
+    if (savedUserSession) {
+      activeUser = JSON.parse(savedUserSession);
+      bootstrapWorkspace();
+    }
+  };
+</script>
+</body>
+</html>
